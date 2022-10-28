@@ -7,19 +7,21 @@ const {
   excluirCarro,
 } = require("./controller/carros");
 
-const { cadastrarUsuario, login, obterPerfil } = require("./controller/usuarios");
+const {
+  cadastrarUsuario,
+  login,
+  obterPerfil,
+} = require("./controller/usuarios");
 const verificarUsuarioLogado = require("./middleware/autenticacao");
-
-
 
 const rotas = express();
 
 rotas.post("/usuario", cadastrarUsuario);
 rotas.post("/login", login);
 
-rotas.use(verificarUsuarioLogado)
+rotas.use(verificarUsuarioLogado);
 
-rotas.get('/perfil', obterPerfil)
+rotas.get("/perfil", obterPerfil);
 
 rotas.get("/carro", listarCarros);
 rotas.get("/carro/:id", detalharCarro);

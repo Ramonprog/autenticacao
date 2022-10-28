@@ -1,62 +1,66 @@
-const pool = require('../conexao')
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
-const senhaJwt = require('../senhaJwt')
+const pool = require("../conexao");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const senhaJwt = require("../senhaJwt");
 
-const cadastrarUsuario = async (req, res) =>{
-    const { nome, email, senha } = req.body
+const cadastrarUsuario = async (req, res) => {
+  const { nome, email, senha } = req.body;
 
-    if(!nome || !email || !senha) return res.status(400).json({mensagem: 'todos os campos são obrigatórios'})
+  if (!nome || !email || !senha)
+    return res
+      .status(400)
+      .json({ mensagem: "todos os campos são obrigatórios" });
 
-    try {
-        const senhaCriptografada = await bcrypt.hash(senha, 10)
+  try {
+    const senhaCriptografada = await bcrypt.hash(senha, 10);
 
-        const novoUsuario = await pool.query(
-            `INSERT INTO usuarios (nome, email, senha) 
+    const novoUsuario = await pool.query(
+      `INSERT INTO usuarios (nome, email, senha) 
             VALUES($1, $2, $3) RETURNING *`,
-            [nome, email, senhaCriptografada]
-        )
-        
-        return res.status(201).json(novoUsuario.rows[0])
-        
-    } catch (error) {
-       return res.status(500).json({mensagem: 'Erro interno do servidor'}) 
-    }
-}
+      [nome, email, senhaCriptografada]
+    );
 
-const login = async (req, res) =>{
-    const { email, senha } = req.body
+    return res.status(201).json(novoUsuario.rows[0]);
+  } catch (error) {
+    return res.status(500).json({ mensagem: "Erro interno do servidor" });
+  }
+};
 
-    try {
-        const usuario = await pool.query(
-            `SELECT * FROM usuarios WHERE email = $1`,
-            [email]
-        )
+const login = async (req, res) => {
+  const { email, senha } = req.body;
 
-        if(usuario.rowCount < 1) return res.status(404).json({mensagem:'Email ou senha invalida'})
+  try {
+    const usuario = await pool.query(
+      `SELECT * FROM usuarios WHERE email = $1`,
+      [email]
+    );
 
-        const senhaValida = await bcrypt.compare(senha, usuario.rows[0].senha)
+    if (usuario.rowCount < 1)
+      return res.status(404).json({ mensagem: "Email ou senha invalida" });
 
-        if(!senhaValida) return res.status(400).json({mensagem:'Email ou senha invalida'})
+    const senhaValida = await bcrypt.compare(senha, usuario.rows[0].senha);
 
-        const token = jwt.sign({ id: usuario.rows[0].id}, senhaJwt, {expiresIn:'8h'} )
+    if (!senhaValida)
+      return res.status(400).json({ mensagem: "Email ou senha invalida" });
 
-        const {senha: _, ...usuarioLogado} = usuario.rows[0]
+    const token = jwt.sign({ id: usuario.rows[0].id }, senhaJwt, {
+      expiresIn: "8h",
+    });
 
-        return res.json({usuario: usuarioLogado, token})
-    } catch (error) {
-        return res.status(500).json({mensagem: 'Erro interno do servidor'}) 
-    }
+    const { senha: _, ...usuarioLogado } = usuario.rows[0];
 
-}
+    return res.json({ usuario: usuarioLogado, token });
+  } catch (error) {
+    return res.status(500).json({ mensagem: "Erro interno do servidor" });
+  }
+};
 
-const obterPerfil = async (req, res) =>{
-    return res.json(req.usuario)
-}
+const obterPerfil = async (req, res) => {
+  return res.json(req.usuario);
+};
 
 module.exports = {
-    cadastrarUsuario,
-    login,
-    obterPerfil
-
-}
+  cadastrarUsuario,
+  login,
+  obterPerfil,
+};
